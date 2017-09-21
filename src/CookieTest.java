@@ -1,7 +1,16 @@
 /**
  * Assignment 2: Java regular expressions <br />
  * Test cookies using regular expressions
+ *
+ * Name: Nathan Klapstein
+ * ID: 1449872
+ *
  */
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+
 public class CookieTest {
 
     /**
@@ -10,10 +19,49 @@ public class CookieTest {
      * @return              {@code boolean} True for a legal cookie; false for an illegal one
      */
     public static boolean verifyCookie(String cookie) {
+
         boolean legal = false;
-        // TODO: Assignment 2 -- compose your regular expression, and use it to verify the cookie
+        //todo
 
+        // check is Set-Cookie and a name is specified properly
+        String goodPattern = "(Set-Cookie: )([A-Za-z0-9]+=(|[\\x21\\x23-\\x2B\\x2D-\\x3A\\x3C-\\x5B\\x5D-\\x7E])";
+        Pattern rG = Pattern.compile(goodPattern);
 
+        // expires-av todo  wkday "," SP date1 SP time SP "GMT"
+        String expiresPattern = "(Expires=((W||||), () () () () ()))";
+        Pattern er = Pattern.compile(expiresPattern);
+
+        // max age pattern
+        String maxAgePattern = "(Max-Age=([^0][0-9]+))";
+        Pattern mar = Pattern.compile(maxAgePattern);
+
+        // domain pattern bad
+        String domainPatternBad = "(Domain=(((\\.0)|(0))|(.*)([^A-Za-z0-9]$)))";
+        Pattern dr = Pattern.compile(domainPatternBad);
+
+        // Path pattern bad
+        String pathPatternBad = "(Path=(;|\\Z|\\s))";
+        Pattern pr = Pattern.compile(pathPatternBad);
+
+        // Secure pattern
+        String securePattern = "(Secure)";
+        Pattern sr = Pattern.compile(securePattern);
+
+        // HttpOnly pattern
+        String httpOnlyPattern = "(HttpOnly)";
+        Pattern hor = Pattern.compile(httpOnlyPattern);
+
+        // Now create matcher object.
+        Matcher m = r.matcher(cookie);
+
+//        if (m.find( )) {
+//            System.out.println("Found value: " + m.group(0) );
+//            System.out.println("Found value: " + m.group(1) );
+//            System.out.println("Found value: " + m.group(2) );
+//        }else {
+//            System.out.println("NO MATCH");
+//        }
+//
         return legal;
     }
 
