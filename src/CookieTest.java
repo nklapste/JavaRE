@@ -10,17 +10,102 @@
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 public class CookieTest {
-
-
-
-
-    public static String verifyCookieKeys(String cookie){
-        return  cookie;
+    /**
+     * Verify a cookie Expires key's time
+     * @param cookie        {@code String}  The cookie string containing a Expires key
+     * @return              {@code boolean} True for a legal cookie; false for an illegal one
+     */
+    public static boolean verifyTime(String cookie){
+        System.out.println("testing time'" + cookie + "'");
+        try {
+            ZonedDateTime zdt =
+                    ZonedDateTime.parse(cookie, DateTimeFormatter.RFC_1123_DATE_TIME);
+            return true;
+        } catch (DateTimeParseException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
+    /**
+     * Verify a cookie's keys
+     * @param cookie        {@code String}  The cookie string
+     * @return              {@code boolean} True for a legal cookie; false for an illegal one
+     */
+    public static boolean verifyCookieKeys(String cookie){
+
+        boolean legalKeys = false;
+        // TODO debug
+        System.out.println("now looking at '" + cookie + "'");
+        // todo deal with httpONly and SECURE case
+        String keySearchPattern = "(\\s([^;]+)=([^;]+|\\Z))(\\Z|;)";
+        Pattern ksr = Pattern.compile(keySearchPattern);
+        Matcher m = ksr.matcher(cookie);
+        if (m.find()){
+            String key = m.group(2);
+            // TODO debug
+            System.out.println("Found cookie key: " + key);
+            switch (key){
+                case "Domain":
+                    System.out.println("Found parsing domain");
+
+                    // domain pattern bad
+                    String domainPatternBad = "(Domain=(((\\.0)|(0))|(.*)([^A-Za-z0-9]$)))";
+                    Pattern dr = Pattern.compile(domainPatternBad);
+                    Matcher dm = dr.matcher(cookie);
+                    if (dm.find()){
+                        return false;
+                    }
+
+                case "Max-Age":
+                    // max age pattern
+                    String maxAgePattern = "(Max-Age=([^0][0-9]+))";
+                    Pattern mar = Pattern.compile(maxAgePattern);
+                    break;
+
+                case "Expires":
+                    // expires-av todo  wkday "," SP date1 SP time SP "GMT"
+                    String expiresPattern = "(Expires=)([^;]+)(\\Z|;)";
+                    Pattern er = Pattern.compile(expiresPattern);
+                    Matcher em = er.matcher(cookie);
+                    if (em.find()){
+                        legalKeys = verifyTime(em.group(2));
+                    }
+                    break;
+
+                case "Path":
+                    // Path pattern bad
+                    String pathPatternBad = "(Path=(;|\\Z|\\s))";
+                    Pattern pr = Pattern.compile(pathPatternBad);
+                    break;
+
+                case "Secure":
+                    // Secure pattern
+                    String securePattern = "(Secure)";
+                    Pattern sr = Pattern.compile(securePattern);
+                    break;
+
+                case "HttpOnly":
+                    // HttpOnly pattern
+                    String httpOnlyPattern = "(HttpOnly)";
+                    Pattern hor = Pattern.compile(httpOnlyPattern);
+                    break;
+
+                default:
+                    // we did not have a proper match for a key
+                    legalKeys = false;
+            }
+        } else {
+            return false;
+        }
+
+        return legalKeys;
+    }
 
     /**
      * Verify a cookie and return the verification result
@@ -28,60 +113,32 @@ public class CookieTest {
      * @return              {@code boolean} True for a legal cookie; false for an illegal one
      */
     public static boolean verifyCookie(String cookie) {
+        System.out.println("verifying cookie: " + cookie );
 
         boolean legal = false;
         //todo
-
         String tokenPattern = "([^\\x00-\\x1E\\x7F\\]\\[<>/:;?={}@\\(\\)\\s]+=)";
-        String cookieOctetPattern = "(\"[\\x21\\x23-\\x2B\\x2D-\\x3A\\x3C-\\x5B\\x5D-\\x7E]+\"|[\\x21\\x23-\\x2B\\x2D-\\x3A\\x3C-\\x5B\\x5D-\\x7E]+|(\\Z|;))";
-        String setCookiePattern = "(Set-Cookie: )" + tokenPattern + cookieOctetPattern;
+        String cookieOctetPattern_1 = "\"[\\x21\\x23-\\x2B\\x2D-\\x3A\\x3C-\\x5B\\x5D-\\x7E]+\"";
+        String cookieOctetPattern_2 = "[\\x21\\x23-\\x2B\\x2D-\\x3A\\x3C-\\x5B\\x5D-\\x7E]+";
+        String cookieOctetPattern = "("+cookieOctetPattern_1+"|"+cookieOctetPattern_2+")?";
+        String setCookiePattern = "(Set-Cookie: )" + tokenPattern + cookieOctetPattern + "(\\Z|;)";
         Pattern scr = Pattern.compile(setCookiePattern);
         Matcher m = scr.matcher(cookie);
         if (m.find()){
-            System.out.println("Found value: " + m.group(0) );
+            // TODO debug
+            System.out.println("Found cookie name and token: " + m.group(0));
             if (Objects.equals(m.group(4), ";")){
-                System.out.println("more token");
+                String cookie_2 = m.replaceAll("");
+                legal = verifyCookieKeys(cookie_2);
             } else {
-                System.out.println("end of token");
+                legal = true;
             }
-            // todo
-            String cookie_2 = m.replaceAll("");
-            System.out.println("now looking at " + cookie_2);
-
-
-            String cookieAvPattern = "([[:blank:]]*)(Expires=|Max-Age=|Domain=|Path=|Secure|HttpOnly)(\\Z|;)";
-            Pattern cavr = Pattern.compile(cookieAvPattern);
-            Matcher m2 = scr.matcher(cookie);
+        } else {
+            legal = false;
         }
 
-        // expires-av todo  wkday "," SP date1 SP time SP "GMT"
-        String expiresPattern = "(Expires=((W||||), () () () () ()))";
-        Pattern er = Pattern.compile(expiresPattern);
-
-        // max age pattern
-        String maxAgePattern = "(Max-Age=([^0][0-9]+))";
-        Pattern mar = Pattern.compile(maxAgePattern);
-
-        // domain pattern bad
-        String domainPatternBad = "(Domain=(((\\.0)|(0))|(.*)([^A-Za-z0-9]$)))";
-        Pattern dr = Pattern.compile(domainPatternBad);
-
-        // Path pattern bad
-        String pathPatternBad = "(Path=(;|\\Z|\\s))";
-        Pattern pr = Pattern.compile(pathPatternBad);
-
-        // Secure pattern
-        String securePattern = "(Secure)";
-        Pattern sr = Pattern.compile(securePattern);
-
-        // HttpOnly pattern
-        String httpOnlyPattern = "(HttpOnly)";
-        Pattern hor = Pattern.compile(httpOnlyPattern);
-
-
         // ensure no trailing ;
-        String trailtest = "(;$)";
-        Pattern ttr = Pattern.compile(trailtest);
+        Pattern ttr = Pattern.compile("(;$)");
         Matcher ttm = scr.matcher(cookie);
         if (m.find()){
             legal = false;
