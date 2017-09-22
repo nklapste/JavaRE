@@ -24,8 +24,20 @@ public class CookieTest {
         //todo
 
         // check is Set-Cookie and a name is specified properly
-        String goodPattern = "(Set-Cookie: )([A-Za-z0-9]+=(|[\\x21\\x23-\\x2B\\x2D-\\x3A\\x3C-\\x5B\\x5D-\\x7E])";
-        Pattern rG = Pattern.compile(goodPattern);
+        // todo token re
+//        "(" | ")" | "<" | ">" | "@"
+//                | "," | ";" | ":" | "\" | <">
+//                | "/" | "[" | "]" | "?" | "="
+//                | "{" | "}" | SP | HT
+//       ctl codes
+        String tokenPattern = "([^\\x00-\\x1E\\x7F\\]\\[<>/:;?={}@\\(\\)\\s]+=)";
+        String cookieOctetPattern = "([;]|\\Z|\"[\\x21\\x23-\\x2B\\x2D-\\x3A\\x3C-\\x5B\\x5D-\\x7E]+\"|[\\x21\\x23-\\x2B\\x2D-\\x3A\\x3C-\\x5B\\x5D-\\x7E]+|\\Z)";
+        String setCookiePattern = "(Set-Cookie: )" + tokenPattern + cookieOctetPattern;
+        Pattern scr = Pattern.compile(setCookiePattern);
+        Matcher m = scr.matcher(cookie);
+        if (m.find()){
+            System.out.println("Found value: " + m.group(0) );
+        }
 
         // expires-av todo  wkday "," SP date1 SP time SP "GMT"
         String expiresPattern = "(Expires=((W||||), () () () () ()))";
@@ -51,16 +63,6 @@ public class CookieTest {
         String httpOnlyPattern = "(HttpOnly)";
         Pattern hor = Pattern.compile(httpOnlyPattern);
 
-        // Now create matcher object.
-        Matcher m = r.matcher(cookie);
-
-//        if (m.find( )) {
-//            System.out.println("Found value: " + m.group(0) );
-//            System.out.println("Found value: " + m.group(1) );
-//            System.out.println("Found value: " + m.group(2) );
-//        }else {
-//            System.out.println("NO MATCH");
-//        }
 //
         return legal;
     }
