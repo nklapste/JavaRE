@@ -7,11 +7,20 @@
  *
  */
 
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
 public class CookieTest {
+
+
+
+
+    public static String verifyCookieKeys(String cookie){
+        return  cookie;
+    }
+
 
     /**
      * Verify a cookie and return the verification result
@@ -23,20 +32,26 @@ public class CookieTest {
         boolean legal = false;
         //todo
 
-        // check is Set-Cookie and a name is specified properly
-        // todo token re
-//        "(" | ")" | "<" | ">" | "@"
-//                | "," | ";" | ":" | "\" | <">
-//                | "/" | "[" | "]" | "?" | "="
-//                | "{" | "}" | SP | HT
-//       ctl codes
         String tokenPattern = "([^\\x00-\\x1E\\x7F\\]\\[<>/:;?={}@\\(\\)\\s]+=)";
-        String cookieOctetPattern = "([;]|\\Z|\"[\\x21\\x23-\\x2B\\x2D-\\x3A\\x3C-\\x5B\\x5D-\\x7E]+\"|[\\x21\\x23-\\x2B\\x2D-\\x3A\\x3C-\\x5B\\x5D-\\x7E]+|\\Z)";
+        String cookieOctetPattern = "(\"[\\x21\\x23-\\x2B\\x2D-\\x3A\\x3C-\\x5B\\x5D-\\x7E]+\"|[\\x21\\x23-\\x2B\\x2D-\\x3A\\x3C-\\x5B\\x5D-\\x7E]+|(\\Z|;))";
         String setCookiePattern = "(Set-Cookie: )" + tokenPattern + cookieOctetPattern;
         Pattern scr = Pattern.compile(setCookiePattern);
         Matcher m = scr.matcher(cookie);
         if (m.find()){
             System.out.println("Found value: " + m.group(0) );
+            if (Objects.equals(m.group(4), ";")){
+                System.out.println("more token");
+            } else {
+                System.out.println("end of token");
+            }
+            // todo
+            String cookie_2 = m.replaceAll("");
+            System.out.println("now looking at " + cookie_2);
+
+
+            String cookieAvPattern = "([[:blank:]]*)(Expires=|Max-Age=|Domain=|Path=|Secure|HttpOnly)(\\Z|;)";
+            Pattern cavr = Pattern.compile(cookieAvPattern);
+            Matcher m2 = scr.matcher(cookie);
         }
 
         // expires-av todo  wkday "," SP date1 SP time SP "GMT"
@@ -63,7 +78,15 @@ public class CookieTest {
         String httpOnlyPattern = "(HttpOnly)";
         Pattern hor = Pattern.compile(httpOnlyPattern);
 
-//
+
+        // ensure no trailing ;
+        String trailtest = "(;$)";
+        Pattern ttr = Pattern.compile(trailtest);
+        Matcher ttm = scr.matcher(cookie);
+        if (m.find()){
+            legal = false;
+        }
+
         return legal;
     }
 
