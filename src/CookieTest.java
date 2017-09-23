@@ -15,6 +15,8 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 
 public class CookieTest {
+
+
     /**
      * Verify a cookie Expires key's time
      * Exires key time should follow a <rfc1123-date, defined in [RFC2616], Section 3.3.1>
@@ -45,15 +47,13 @@ public class CookieTest {
             String key = m.group(2);
             switch (key){
                 case "Domain":
-                    // todo
-                    String domainPatternBad = "Domain=((?=.{4,253})\\.?((?!-)[a-zA-Z1-9][a-zA-Z0-9]{0,62})+\\.([a-zA-Z0-9\\-]{2,63}(?!-))(?=;|\\Z)|(?=;|\\Z))";
-                    Pattern dr = Pattern.compile(domainPatternBad);
+                    String domainPattern1 = "(?=.{4,253})\\.?((?!-0)[a-zA-Z0-9\\-]{1,62}(?<!-0)\\.)+([a-zA-Z0-9\\-]{2,63}(?!-))(?=;|\\Z)";
+                    String domainPattern = "Domain=(" + domainPattern1 + "|(?=;|\\Z))";
+                    Pattern dr = Pattern.compile(domainPattern);
                     Matcher dm = dr.matcher(cookie);
                     if (dm.find()){
                         legalKeys = true;
                         cookie = dm.replaceAll("");
-                    } else{
-                        legalKeys = false;
                     }
 
                 case "Max-Age":
@@ -84,17 +84,12 @@ public class CookieTest {
                     if (pm.find()){
                         legalKeys = true;
                         cookie = pm.replaceAll("");
-                    } else {
-                        legalKeys = false;
                     }
                     break;
 
                 default:
                     legalKeys = false;
             }
-
-
-
         } else {
             String keySearchPattern2 = "\\s?([^;]+)";
             Pattern ks2r = Pattern.compile(keySearchPattern2);
@@ -109,8 +104,6 @@ public class CookieTest {
                         if (m.find()) {
                             legalKeys = true;
                             cookie = sm.replaceAll("");
-                        } else {
-                            legalKeys = false;
                         }
                         break;
 
@@ -121,8 +114,6 @@ public class CookieTest {
                         if (hom.find()) {
                             legalKeys = true;
                             cookie = hom.replaceAll("");
-                        } else {
-                            legalKeys = false;
                         }
                         break;
 
@@ -154,6 +145,14 @@ public class CookieTest {
     public static boolean verifyCookie(String cookie) {
         boolean legal = false;
 
+
+        // ensure no trailing ; if one is present fail (return false)
+        Pattern ttr = Pattern.compile("(;$)");
+        Matcher ttm = ttr.matcher(cookie);
+        if (ttm.find()){
+            return false;
+        }
+
         // search/match the cookie_name=cookie_token pattern
         String tokenPattern = "([^\\x00-\\x1E\\x7F\\]\\[<>/:;?={}@\\(\\)\\s]+=)";
         String cookieOctetPattern_1 = "\"[\\x21\\x23-\\x2B\\x2D-\\x3A\\x3C-\\x5B\\x5D-\\x7E]+\"";
@@ -164,20 +163,12 @@ public class CookieTest {
         Matcher m = scr.matcher(cookie);
         if (m.find()){
             if (Objects.equals(m.group(3), ";")){
-                String cookie_2 = m.replaceAll("");
-                legal = verifyCookieKeys(cookie_2);
+                cookie = m.replaceAll("");
+                legal = verifyCookieKeys(cookie);
             } else {
                 legal = true;
             }
         }
-
-        // ensure no trailing ;
-        Pattern ttr = Pattern.compile("(;$)");
-        Matcher ttm = ttr.matcher(cookie);
-        if (ttm.find()){
-            legal = false;
-        }
-
         return legal;
     }
 
