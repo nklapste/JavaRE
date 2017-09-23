@@ -43,7 +43,7 @@ public class CookieTest {
         // TODO debug
         System.out.println("now looking at '" + cookie + "'");
         // todo deal with httpONly and SECURE case
-        String keySearchPattern = "(\\s([^;]+)=([^;]+|\\Z))(\\Z|;)";
+        String keySearchPattern = "(\\s?([^;]+)=([^;]+|\\Z))(\\Z|;)";
         Pattern ksr = Pattern.compile(keySearchPattern);
         Matcher m = ksr.matcher(cookie);
         if (m.find()){
@@ -52,58 +52,98 @@ public class CookieTest {
             System.out.println("Found cookie key: " + key);
             switch (key){
                 case "Domain":
-                    System.out.println("Found parsing domain");
-
                     // domain pattern bad
+//                    String domainPatternBad = "(Domain=(((\\.0)|(0))|(.*)([^A-Za-z0-9]$)))";
                     String domainPatternBad = "(Domain=(((\\.0)|(0))|(.*)([^A-Za-z0-9]$)))";
                     Pattern dr = Pattern.compile(domainPatternBad);
                     Matcher dm = dr.matcher(cookie);
                     if (dm.find()){
-                        return false;
+                        legalKeys = false;
+                    } else{
+                        legalKeys = true;
+                        //TODO remove
                     }
 
                 case "Max-Age":
                     // max age pattern
-                    String maxAgePattern = "(Max-Age=([^0][0-9]+))";
+                    String maxAgePattern = "Max-Age=([^0][0-9]+)";
                     Pattern mar = Pattern.compile(maxAgePattern);
+                    Matcher mam = mar.matcher(cookie);
+                    if (mam.find()){
+                        legalKeys = true;
+                        cookie = mam.replaceAll("");
+                    }
                     break;
 
                 case "Expires":
                     // expires-av todo  wkday "," SP date1 SP time SP "GMT"
-                    String expiresPattern = "(Expires=)([^;]+)(\\Z|;)";
+                    String expiresPattern = "(Expires=)([^;]+)";
                     Pattern er = Pattern.compile(expiresPattern);
                     Matcher em = er.matcher(cookie);
                     if (em.find()){
                         legalKeys = verifyTime(em.group(2));
+                        cookie = em.replaceAll("");
                     }
                     break;
 
                 case "Path":
                     // Path pattern bad
-                    String pathPatternBad = "(Path=(;|\\Z|\\s))";
-                    Pattern pr = Pattern.compile(pathPatternBad);
+//                    String pathPatternBad = "(Path=(;|\\Z|\\s))";
+                    String pathPattern = "Path=([^;]+)";
+                    Pattern pr = Pattern.compile(pathPattern);
+                    Matcher pm = pr.matcher(cookie);
+                    if (pm.find()){
+                        legalKeys = true;
+                        cookie = pm.replaceAll("");
+                    } else {
+                        legalKeys = false;
+                    }
                     break;
 
                 case "Secure":
                     // Secure pattern
-                    String securePattern = "(Secure)";
+                    String securePattern = "Secure";
                     Pattern sr = Pattern.compile(securePattern);
+                    Matcher sm = sr.matcher(cookie);
+                    if (m.find()){
+                        legalKeys = true;
+                        cookie = sm.replaceAll("");
+                    } else {
+                        legalKeys = false;
+                    }
                     break;
 
                 case "HttpOnly":
                     // HttpOnly pattern
-                    String httpOnlyPattern = "(HttpOnly)";
+                    String httpOnlyPattern = "HttpOnly";
                     Pattern hor = Pattern.compile(httpOnlyPattern);
+                    Matcher hom = hor.matcher(cookie);
+                    if (hom.find()){
+                        legalKeys = true;
+                        cookie = hom.replaceAll("");
+                    } else {
+                        legalKeys = false;
+                    }
                     break;
 
                 default:
                     // we did not have a proper match for a key
                     legalKeys = false;
             }
+            if (legalKeys){
+                //TODO NEED OTHER METHOD need more accurate way
+                Pattern hor = Pattern.compile("(\\s+;)");
+                Matcher hom = hor.matcher(cookie);
+                System.out.println("test at '" + cookie + "'");
+                if (hom.find()) {
+                    cookie = hom.replaceAll("");
+                    System.out.println("test at '" + cookie + "'");
+                    legalKeys = verifyCookieKeys(cookie);
+                }
+            }
         } else {
-            return false;
+            legalKeys = false;
         }
-
         return legalKeys;
     }
 
@@ -152,29 +192,33 @@ public class CookieTest {
      * @param args          {@code String[]} Command line arguments
      */
     public static void main(String[] args) {
+//        String [] cookies = {
+//                // Legal cookies:
+//                "Set-Cookie: ns1=\"alss/0.foobar^\"",                                           // 01 name=value
+//                "Set-Cookie: ns1=",                                                             // 02 empty value
+//                "Set-Cookie: ns1=\"alss/0.foobar^\"; Expires=Tue, 18 Nov 2008 16:35:39 GMT",    // 03 Expires=time_stamp
+//                "Set-Cookie: ns1=; Domain=",                                                    // 04 empty domain
+//                "Set-Cookie: ns1=; Domain=.srv.a.com-0",                                        // 05 Domain=host_name
+//                "Set-Cookie: lu=Rg3v; Expires=Tue, 18 Nov 2008 16:35:39 GMT; Path=/; Domain=.example.com; HttpOnly", // 06
+//                // Illegal cookies:
+//                "Set-Cookie:",                                              // 07 empty cookie-pair
+//                "Set-Cookie: sd",                                           // 08 illegal cookie-pair: no "="
+//                "Set-Cookie: =alss/0.foobar^",                              // 09 illegal cookie-pair: empty name
+//                "Set-Cookie: ns@1=alss/0.foobar^",                          // 10 illegal cookie-pair: illegal name
+//                "Set-Cookie: ns1=alss/0.foobar^;",                          // 11 trailing ";"
+//                "Set-Cookie: ns1=; Expires=Tue 18 Nov 2008 16:35:39 GMT",   // 12 illegal Expires value
+//                "Set-Cookie: ns1=alss/0.foobar^; Max-Age=01",               // 13 illegal Max-Age: starting 0
+//                "Set-Cookie: ns1=alss/0.foobar^; Domain=.0com",             // 14 illegal Domain: starting 0
+//                "Set-Cookie: ns1=alss/0.foobar^; Domain=.com-",             // 15 illegal Domain: trailing non-letter-digit
+//                "Set-Cookie: ns1=alss/0.foobar^; Path=",                    // 16 illegal Path: empty
+//                "Set-Cookie: ns1=alss/0.foobar^; httponly",                 // 17 lower case
+//        };
         String [] cookies = {
-                // Legal cookies:
-                "Set-Cookie: ns1=\"alss/0.foobar^\"",                                           // 01 name=value
-                "Set-Cookie: ns1=",                                                             // 02 empty value
-                "Set-Cookie: ns1=\"alss/0.foobar^\"; Expires=Tue, 18 Nov 2008 16:35:39 GMT",    // 03 Expires=time_stamp
-                "Set-Cookie: ns1=; Domain=",                                                    // 04 empty domain
-                "Set-Cookie: ns1=; Domain=.srv.a.com-0",                                        // 05 Domain=host_name
+
                 "Set-Cookie: lu=Rg3v; Expires=Tue, 18 Nov 2008 16:35:39 GMT; Path=/; Domain=.example.com; HttpOnly", // 06
-                // Illegal cookies:
-                "Set-Cookie:",                                              // 07 empty cookie-pair
-                "Set-Cookie: sd",                                           // 08 illegal cookie-pair: no "="
-                "Set-Cookie: =alss/0.foobar^",                              // 09 illegal cookie-pair: empty name
-                "Set-Cookie: ns@1=alss/0.foobar^",                          // 10 illegal cookie-pair: illegal name
-                "Set-Cookie: ns1=alss/0.foobar^;",                          // 11 trailing ";"
-                "Set-Cookie: ns1=; Expires=Tue 18 Nov 2008 16:35:39 GMT",   // 12 illegal Expires value
-                "Set-Cookie: ns1=alss/0.foobar^; Max-Age=01",               // 13 illegal Max-Age: starting 0
-                "Set-Cookie: ns1=alss/0.foobar^; Domain=.0com",             // 14 illegal Domain: starting 0
-                "Set-Cookie: ns1=alss/0.foobar^; Domain=.com-",             // 15 illegal Domain: trailing non-letter-digit
-                "Set-Cookie: ns1=alss/0.foobar^; Path=",                    // 16 illegal Path: empty
-                "Set-Cookie: ns1=alss/0.foobar^; httponly",                 // 17 lower case
+
         };
         for (int i = 0; i < cookies.length; i++)
             System.out.println(String.format("Cookie %2d: %s", i+1, verifyCookie(cookies[i]) ? "Legal" : "Illegal"));
     }
-
 }
