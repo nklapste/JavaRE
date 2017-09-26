@@ -32,6 +32,22 @@ public class CookieTest {
         }
     }
 
+    /**
+     * Verify a basic cookie key
+     * @param value        {@code String}  A string defining a cookie key's value
+     *
+     * @param pattern      {@code String}  A string defining a regex patter the key should follow
+     * @return             {@code boolean} True for a legal (regex wise) cookie key value; false for an illegal one
+     */
+    public static boolean verifyKeyValue(String value, String pattern) {
+        // init the regex pattern and matcher variables
+        Pattern r;
+        Matcher m;
+        r = Pattern.compile(pattern);
+        m = r.matcher(value);
+        return m.find();
+    }
+
 
     /**
      * Verify a cookie's keys
@@ -44,51 +60,31 @@ public class CookieTest {
         Matcher m;
         boolean legalKeys = false;
 
-        // search for standard cookie keys "keyname=keyvalue"
-        String keySearchPattern = "([^;]+)=([^;]+|\\Z)";
-        r = Pattern.compile(keySearchPattern);
+        // search for standard cookie keys "key=value"
+        r = Pattern.compile("^([^;]+)=([^;]+|\\Z)");
         m = r.matcher(cookie);
         if (m.find()){
             String key = m.group(1);
+            String value = m.group(2);
+
+            // delete the found key=value pair from the cookie string
+            cookie = m.replaceAll("");
+
             switch (key){
                 case "Domain":
-                    String domainPattern1 = "(?=.{4,253})\\.?((?!-0)[a-zA-Z0-9\\-]{1,62}(?<!-0)\\.)+([a-zA-Z0-9\\-]{2,63}(?!-))";
-                    String domainPattern = "Domain=(" + domainPattern1 + "|(?=;|\\Z))";
-                    r = Pattern.compile(domainPattern);
-                    m = r.matcher(cookie);
-                    if (m.find()){
-                        legalKeys = true;
-                        cookie = m.replaceAll("");
-                    }
+                    legalKeys = verifyKeyValue(value, "^(((?=.{4,253})\\.?((?!-0)[a-zA-Z0-9\\-]{1,62}(?<!-0)\\.)+([a-zA-Z0-9\\-]{2,63}(?!-)))|\\Z)");
+                    break;
 
                 case "Max-Age":
-                    String maxAgePattern = "Max-Age=([1-9][0-9]*)";
-                    r = Pattern.compile(maxAgePattern);
-                    m = r.matcher(cookie);
-                    if (m.find()){
-                        legalKeys = true;
-                        cookie = m.replaceAll("");
-                    }
+                    legalKeys = verifyKeyValue(value, "^([1-9][0-9]*)");
                     break;
 
                 case "Expires":
-                    String expiresPattern = "Expires=([^;]+)";
-                    r = Pattern.compile(expiresPattern);
-                    m = r.matcher(cookie);
-                    if (m.find()){
-                        legalKeys = verifyTime(m.group(1));
-                        cookie = m.replaceAll("");
-                    }
+                    legalKeys = verifyTime(value);
                     break;
 
                 case "Path":
-                    String pathPattern = "Path=([^;]+)";
-                    r = Pattern.compile(pathPattern);
-                    m = r.matcher(cookie);
-                    if (m.find()){
-                        legalKeys = true;
-                        cookie = m.replaceAll("");
-                    }
+                    legalKeys = verifyKeyValue(value, "[^;\\x00-\\x1E\\x7F\\]]+");
                     break;
 
                 default:
@@ -96,30 +92,20 @@ public class CookieTest {
             }
         } else {
             // search for simple cookie keys (non-equatable)
-            String keySearchPattern2 = " ?([^;]+)";
-            r = Pattern.compile(keySearchPattern2);
+            r = Pattern.compile("^([^;]+)");
             m = r.matcher(cookie);
             if (m.find()) {
                 String key = m.group(1);
+
+                // delete the found key from the cookie string
+                cookie = m.replaceAll("");
                 switch (key) {
                     case "Secure":
-                        String securePattern = "Secure";
-                        r = Pattern.compile(securePattern);
-                        m = r.matcher(cookie);
-                        if (m.find()) {
-                            legalKeys = true;
-                            cookie = m.replaceAll("");
-                        }
+                        legalKeys = true;
                         break;
 
                     case "HttpOnly":
-                        String httpOnlyPattern = "HttpOnly";
-                        r = Pattern.compile(httpOnlyPattern);
-                        m = r.matcher(cookie);
-                        if (m.find()) {
-                            legalKeys = true;
-                            cookie = m.replaceAll("");
-                        }
+                        legalKeys = true;
                         break;
 
                     default:
@@ -128,13 +114,14 @@ public class CookieTest {
             }
         }
 
-        // if last key check was successful and we have a ; look for
+        // if last key check was successful and we have a ";"
+        // at the start of the remaining string look for
         // another key and test it
         if (legalKeys){
-            r = Pattern.compile("^ ; ");
+            r = Pattern.compile("^; ");
             m = r.matcher(cookie);
             if (m.find()) {
-                // remove the " ; " off the start of the string
+                // remove the "; " off the start of the string
                 cookie = m.replaceAll("");
 
                 // verify the next cookie key
@@ -197,7 +184,6 @@ public class CookieTest {
                 "Set-Cookie: ns1=; Domain=",                                                    // 04 empty domain
                 "Set-Cookie: ns1=; Domain=.srv.a.com-0",                                        // 05 Domain=host_name
                 "Set-Cookie: lu=Rg3v; Expires=Tue, 18 Nov 2008 16:35:39 GMT; Path=/; Domain=.example.com; HttpOnly", // 06
-                "Set-Cookie: lu=Rg3v; Expires=Tue, 18 Nov 2008 16:35:39 GMT; Path=/; Secure; Domain=.example.com; HttpOnly", // a1
                 // Illegal cookies:
                 "Set-Cookie:",                                              // 07 empty cookie-pair
                 "Set-Cookie: sd",                                           // 08 illegal cookie-pair: no "="
