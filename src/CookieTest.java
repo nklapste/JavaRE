@@ -39,51 +39,55 @@ public class CookieTest {
      * @return              {@code boolean} True if all the cookie strings keys are correct; false otherwise
      */
     public static boolean verifyCookieKeys(String cookie){
+        // init the regex pattern and matcher variables
+        Pattern r;
+        Matcher m;
         boolean legalKeys = false;
+
         // search for standard cookie keys "keyname=keyvalue"
         String keySearchPattern = "([^;]+)=([^;]+|\\Z)";
-        Pattern ksr = Pattern.compile(keySearchPattern);
-        Matcher m = ksr.matcher(cookie);
+        r = Pattern.compile(keySearchPattern);
+        m = r.matcher(cookie);
         if (m.find()){
             String key = m.group(1);
             switch (key){
                 case "Domain":
                     String domainPattern1 = "(?=.{4,253})\\.?((?!-0)[a-zA-Z0-9\\-]{1,62}(?<!-0)\\.)+([a-zA-Z0-9\\-]{2,63}(?!-))";
                     String domainPattern = "Domain=(" + domainPattern1 + "|(?=;|\\Z))";
-                    Pattern dr = Pattern.compile(domainPattern);
-                    Matcher dm = dr.matcher(cookie);
-                    if (dm.find()){
+                    r = Pattern.compile(domainPattern);
+                    m = r.matcher(cookie);
+                    if (m.find()){
                         legalKeys = true;
-                        cookie = dm.replaceAll("");
+                        cookie = m.replaceAll("");
                     }
 
                 case "Max-Age":
                     String maxAgePattern = "Max-Age=([1-9][0-9]*)";
-                    Pattern mar = Pattern.compile(maxAgePattern);
-                    Matcher mam = mar.matcher(cookie);
-                    if (mam.find()){
+                    r = Pattern.compile(maxAgePattern);
+                    m = r.matcher(cookie);
+                    if (m.find()){
                         legalKeys = true;
-                        cookie = mam.replaceAll("");
+                        cookie = m.replaceAll("");
                     }
                     break;
 
                 case "Expires":
                     String expiresPattern = "Expires=([^;]+)";
-                    Pattern er = Pattern.compile(expiresPattern);
-                    Matcher em = er.matcher(cookie);
-                    if (em.find()){
-                        legalKeys = verifyTime(em.group(1));
-                        cookie = em.replaceAll("");
+                    r = Pattern.compile(expiresPattern);
+                    m = r.matcher(cookie);
+                    if (m.find()){
+                        legalKeys = verifyTime(m.group(1));
+                        cookie = m.replaceAll("");
                     }
                     break;
 
                 case "Path":
                     String pathPattern = "Path=([^;]+)";
-                    Pattern pr = Pattern.compile(pathPattern);
-                    Matcher pm = pr.matcher(cookie);
-                    if (pm.find()){
+                    r = Pattern.compile(pathPattern);
+                    m = r.matcher(cookie);
+                    if (m.find()){
                         legalKeys = true;
-                        cookie = pm.replaceAll("");
+                        cookie = m.replaceAll("");
                     }
                     break;
 
@@ -93,28 +97,28 @@ public class CookieTest {
         } else {
             // search for simple cookie keys (non-equatable)
             String keySearchPattern2 = " ?([^;]+)";
-            Pattern ks2r = Pattern.compile(keySearchPattern2);
-            Matcher m2 = ks2r.matcher(cookie);
-            if (m2.find()) {
-                String key = m2.group(1);
+            r = Pattern.compile(keySearchPattern2);
+            m = r.matcher(cookie);
+            if (m.find()) {
+                String key = m.group(1);
                 switch (key) {
                     case "Secure":
                         String securePattern = "Secure";
-                        Pattern sr = Pattern.compile(securePattern);
-                        Matcher sm = sr.matcher(cookie);
-                        if (sm.find()) {
+                        r = Pattern.compile(securePattern);
+                        m = r.matcher(cookie);
+                        if (m.find()) {
                             legalKeys = true;
-                            cookie = sm.replaceAll("");
+                            cookie = m.replaceAll("");
                         }
                         break;
 
                     case "HttpOnly":
                         String httpOnlyPattern = "HttpOnly";
-                        Pattern hor = Pattern.compile(httpOnlyPattern);
-                        Matcher hom = hor.matcher(cookie);
-                        if (hom.find()) {
+                        r = Pattern.compile(httpOnlyPattern);
+                        m = r.matcher(cookie);
+                        if (m.find()) {
                             legalKeys = true;
-                            cookie = hom.replaceAll("");
+                            cookie = m.replaceAll("");
                         }
                         break;
 
@@ -127,11 +131,12 @@ public class CookieTest {
         // if last key check was successful and we have a ; look for
         // another key and test it
         if (legalKeys){
-            Pattern hor = Pattern.compile("^ ; ");
-            Matcher hom = hor.matcher(cookie);
-            if (hom.find()) {
+            r = Pattern.compile("^ ; ");
+            m = r.matcher(cookie);
+            if (m.find()) {
                 // remove the " ; " off the start of the string
-                cookie = hom.replaceAll("");
+                cookie = m.replaceAll("");
+
                 // verify the next cookie key
                 legalKeys = verifyCookieKeys(cookie);
             }
@@ -146,13 +151,17 @@ public class CookieTest {
      * @return              {@code boolean} True for a legal cookie; false for an illegal one
      */
     public static boolean verifyCookie(String cookie) {
-        boolean legal = false;
+        // init the regex pattern and matcher variables
+        Pattern r;
+        Matcher m;
+        boolean legalCookie = false;
+
 
 
         // ensure no trailing ; if one is present fail (return false)
-        Pattern ttr = Pattern.compile("(;$)");
-        Matcher ttm = ttr.matcher(cookie);
-        if (ttm.find()){
+        r = Pattern.compile("(;$)");
+        m = r.matcher(cookie);
+        if (m.find()){
             return false;
         }
 
@@ -161,18 +170,18 @@ public class CookieTest {
         String cookieOctetPattern_1 = "\"[\\x21\\x23-\\x2B\\x2D-\\x3A\\x3C-\\x5B\\x5D-\\x7E]+\"";
         String cookieOctetPattern_2 = "[\\x21\\x23-\\x2B\\x2D-\\x3A\\x3C-\\x5B\\x5D-\\x7E]+";
         String cookieOctetPattern = "("+cookieOctetPattern_1+"|"+cookieOctetPattern_2+")?";
-        String setCookiePattern = "Set-Cookie: " + tokenPattern + cookieOctetPattern + "(\\Z|; )";
-        Pattern scr = Pattern.compile(setCookiePattern);
-        Matcher m = scr.matcher(cookie);
+        String setCookiePattern = "^Set-Cookie: " + tokenPattern + cookieOctetPattern + "(\\Z|; )";
+        r = Pattern.compile(setCookiePattern);
+        m = r.matcher(cookie);
         if (m.find()){
             if (Objects.equals(m.group(3), "; ")){
                 cookie = m.replaceAll("");
-                legal = verifyCookieKeys(cookie);
+                legalCookie = verifyCookieKeys(cookie);
             } else {
-                legal = true;
+                legalCookie = true;
             }
         }
-        return legal;
+        return legalCookie;
     }
 
     /**
@@ -202,11 +211,6 @@ public class CookieTest {
                 "Set-Cookie: ns1=alss/0.foobar^; Path=",                    // 16 illegal Path: empty
                 "Set-Cookie: ns1=alss/0.foobar^; httponly",                 // 17 lower case
         };
-//        String [] cookies = {
-//
-//                "Set-Cookie: lu=Rg3v; Expires=Tue, 18 Nov 2008 16:35:39 GMT; Path=/; Domain=.example.com; HttpOnly", // 06
-//
-//        };
         for (int i = 0; i < cookies.length; i++)
             System.out.println(String.format("Cookie %2d: %s", i+1, verifyCookie(cookies[i]) ? "Legal" : "Illegal"));
     }
