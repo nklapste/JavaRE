@@ -23,7 +23,7 @@ public class CookieTest {
      * @param cookie        {@code String}  The cookie string containing a Expires key
      * @return              {@code boolean} True for a legal Expires time; false for an illegal one
      */
-    public static boolean verifyTime(String cookie){
+    private static boolean verifyTime(String cookie){
         try {
             ZonedDateTime.parse(cookie, DateTimeFormatter.RFC_1123_DATE_TIME);
             return true;
@@ -33,16 +33,17 @@ public class CookieTest {
     }
 
     /**
-     * Verify a basic cookie key
+     * Verify a basic cookie key using regex
      * @param value        {@code String}  A string defining a cookie key's value
      *
      * @param pattern      {@code String}  A string defining a regex patter the key should follow
      * @return             {@code boolean} True for a legal (regex wise) cookie key value; false for an illegal one
      */
-    public static boolean verifyKeyValue(String value, String pattern) {
+    private static boolean verifyKeyValue(String value, String pattern) {
         // init the regex pattern and matcher variables
         Pattern r;
         Matcher m;
+
         r = Pattern.compile(pattern);
         m = r.matcher(value);
         return m.find();
@@ -54,7 +55,7 @@ public class CookieTest {
      * @param cookie        {@code String}  The cookie string
      * @return              {@code boolean} True if all the cookie strings keys are correct; false otherwise
      */
-    public static boolean verifyCookieKeys(String cookie){
+    private static boolean verifyCookieKeys(String cookie){
         // init the regex pattern and matcher variables
         Pattern r;
         Matcher m;
@@ -63,6 +64,7 @@ public class CookieTest {
         // search for standard cookie keys "key=value"
         r = Pattern.compile("^([^;]+)=([^;]*|\\Z|)");
         m = r.matcher(cookie);
+
         if (m.find()){
             String key = m.group(1);
             String value = m.group(2);
@@ -94,6 +96,7 @@ public class CookieTest {
             // search for simple cookie keys (non-equatable)
             r = Pattern.compile("^([^;]+)");
             m = r.matcher(cookie);
+
             if (m.find()) {
                 String key = m.group(1);
 
@@ -137,13 +140,11 @@ public class CookieTest {
      * @param cookie        {@code String}  The cookie string
      * @return              {@code boolean} True for a legal cookie; false for an illegal one
      */
-    public static boolean verifyCookie(String cookie) {
+    private static boolean verifyCookie(String cookie) {
         // init the regex pattern and matcher variables
         Pattern r;
         Matcher m;
         boolean legalCookie = false;
-
-
 
         // ensure no trailing ; if one is present fail (return false)
         r = Pattern.compile("(;$)");
@@ -152,15 +153,19 @@ public class CookieTest {
             return false;
         }
 
-        // search/match the cookie_name=cookie_token pattern
+        // match the cookie_name=cookie_token pattern
         String tokenPattern = "([^\\x00-\\x1E\\x7F\\]\\[<>/:;?={}@\\(\\)\\s]+=)";
         String cookieOctetPattern_1 = "\"[\\x21\\x23-\\x2B\\x2D-\\x3A\\x3C-\\x5B\\x5D-\\x7E]+\"";
         String cookieOctetPattern_2 = "[\\x21\\x23-\\x2B\\x2D-\\x3A\\x3C-\\x5B\\x5D-\\x7E]+";
         String cookieOctetPattern = "("+cookieOctetPattern_1+"|"+cookieOctetPattern_2+")?";
         String setCookiePattern = "^Set-Cookie: " + tokenPattern + cookieOctetPattern + "(\\Z|; )";
+
         r = Pattern.compile(setCookiePattern);
         m = r.matcher(cookie);
+
         if (m.find()){
+            // if a cookie_name=cookie_token pattern was found
+            // and we have a "; " present verify the cookie's keys
             if (Objects.equals(m.group(3), "; ")){
                 cookie = m.replaceAll("");
                 legalCookie = verifyCookieKeys(cookie);
@@ -170,6 +175,7 @@ public class CookieTest {
         }
         return legalCookie;
     }
+
 
     /**
      * Main entry
@@ -200,6 +206,7 @@ public class CookieTest {
                 "Set-Cookie: ns1=alss/0.foobar^; Path=; HttpOnly",          // 18 bad path
                 "Set-Cookie: ns1=alss/0.foobar^; floop=doop",               // 19 bad key
         };
+
         for (int i = 0; i < cookies.length; i++)
             System.out.println(String.format("Cookie %2d: %s", i+1, verifyCookie(cookies[i]) ? "Legal" : "Illegal"));
     }
