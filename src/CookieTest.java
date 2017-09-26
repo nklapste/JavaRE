@@ -61,7 +61,7 @@ public class CookieTest {
         boolean legalKeys = false;
 
         // search for standard cookie keys "key=value"
-        r = Pattern.compile("^([^;]+)=([^;]+|\\Z)");
+        r = Pattern.compile("^([^;]+)=([^;]*|\\Z|)");
         m = r.matcher(cookie);
         if (m.find()){
             String key = m.group(1);
@@ -183,6 +183,7 @@ public class CookieTest {
                 "Set-Cookie: ns1=\"alss/0.foobar^\"; Expires=Tue, 18 Nov 2008 16:35:39 GMT",    // 03 Expires=time_stamp
                 "Set-Cookie: ns1=; Domain=",                                                    // 04 empty domain
                 "Set-Cookie: ns1=; Domain=.srv.a.com-0",                                        // 05 Domain=host_name
+                "Set-Cookie: ns1=; Domain=; HttpOnly",                                        // 05 Domain=host_name
                 "Set-Cookie: lu=Rg3v; Expires=Tue, 18 Nov 2008 16:35:39 GMT; Path=/; Domain=.example.com; HttpOnly", // 06
                 // Illegal cookies:
                 "Set-Cookie:",                                              // 07 empty cookie-pair
