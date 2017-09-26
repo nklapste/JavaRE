@@ -183,7 +183,6 @@ public class CookieTest {
                 "Set-Cookie: ns1=\"alss/0.foobar^\"; Expires=Tue, 18 Nov 2008 16:35:39 GMT",    // 03 Expires=time_stamp
                 "Set-Cookie: ns1=; Domain=",                                                    // 04 empty domain
                 "Set-Cookie: ns1=; Domain=.srv.a.com-0",                                        // 05 Domain=host_name
-                "Set-Cookie: ns1=; Domain=; HttpOnly",                                        // 05 Domain=host_name
                 "Set-Cookie: lu=Rg3v; Expires=Tue, 18 Nov 2008 16:35:39 GMT; Path=/; Domain=.example.com; HttpOnly", // 06
                 // Illegal cookies:
                 "Set-Cookie:",                                              // 07 empty cookie-pair
@@ -197,6 +196,9 @@ public class CookieTest {
                 "Set-Cookie: ns1=alss/0.foobar^; Domain=.com-",             // 15 illegal Domain: trailing non-letter-digit
                 "Set-Cookie: ns1=alss/0.foobar^; Path=",                    // 16 illegal Path: empty
                 "Set-Cookie: ns1=alss/0.foobar^; httponly",                 // 17 lower case
+                // Custom illegal cookies
+                "Set-Cookie: ns1=alss/0.foobar^; Path=; HttpOnly",          // 18 bad path
+                "Set-Cookie: ns1=alss/0.foobar^; floop=doop",               // 19 bad key
         };
         for (int i = 0; i < cookies.length; i++)
             System.out.println(String.format("Cookie %2d: %s", i+1, verifyCookie(cookies[i]) ? "Legal" : "Illegal"));
