@@ -32,10 +32,10 @@ public class CookieTest {
         }
     }
 
+
     /**
      * Verify a basic cookie key using regex
      * @param value        {@code String}  A string defining a cookie key's value
-     *
      * @param pattern      {@code String}  A string defining a regex patter the key should follow
      * @return             {@code boolean} True for a legal (regex wise) cookie key value; false for an illegal one
      */
@@ -51,7 +51,7 @@ public class CookieTest {
 
 
     /**
-     * Verify a cookie's keys
+     * Recursive loop that verifys a cookie's keys
      * @param cookie        {@code String}  The cookie string
      * @return              {@code boolean} True if all the cookie strings keys are correct; false otherwise
      */
@@ -62,7 +62,7 @@ public class CookieTest {
         boolean legalKeys = false;
 
         // search for standard cookie keys "key=value"
-        r = Pattern.compile("^([^;]+)=([^;]*|\\Z|)");
+        r = Pattern.compile("^([^;]+)=([^;]*|\\Z)");
         m = r.matcher(cookie);
 
         if (m.find()){
@@ -131,9 +131,9 @@ public class CookieTest {
                 legalKeys = verifyCookieKeys(cookie);
             }
         }
-
         return legalKeys;
     }
+
 
     /**
      * Verify a cookie and return the verification result
@@ -178,7 +178,7 @@ public class CookieTest {
 
 
     /**
-     * Main entry
+     * Main entry: start of the tests to check valid cookie functionality
      * @param args          {@code String[]} Command line arguments
      */
     public static void main(String[] args) {
@@ -202,9 +202,11 @@ public class CookieTest {
                 "Set-Cookie: ns1=alss/0.foobar^; Domain=.com-",             // 15 illegal Domain: trailing non-letter-digit
                 "Set-Cookie: ns1=alss/0.foobar^; Path=",                    // 16 illegal Path: empty
                 "Set-Cookie: ns1=alss/0.foobar^; httponly",                 // 17 lower case
+                // Custom legal cookies
+                "Set-Cookie: ns1=\"alss/0.foobar^\"; HttpOnly; Secure",
                 // Custom illegal cookies
-                "Set-Cookie: ns1=alss/0.foobar^; Path=; HttpOnly",          // 18 bad path
-                "Set-Cookie: ns1=alss/0.foobar^; floop=doop",               // 19 bad key
+                "Set-Cookie: ns1=alss/0.foobar^; Path=; HttpOnly",          // 19 bad path
+                "Set-Cookie: ns1=alss/0.foobar^; floop=doop",               // 20 bad key
         };
 
         for (int i = 0; i < cookies.length; i++)
