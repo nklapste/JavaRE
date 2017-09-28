@@ -20,12 +20,12 @@ public class CookieTest {
     /**
      * Verify a cookie Expires key's time
      * Exires key time should follow a <rfc1123-date, defined in [RFC2616], Section 3.3.1>
-     * @param cookie        {@code String}  The cookie string containing a Expires key
+     * @param expiresTime        {@code String}  The string containing a Expires key's time
      * @return              {@code boolean} True for a legal Expires time; false for an illegal one
      */
-    private static boolean verifyTime(String cookie){
+    private static boolean verifyTime(String expiresTime){
         try {
-            ZonedDateTime.parse(cookie, DateTimeFormatter.RFC_1123_DATE_TIME);
+            ZonedDateTime.parse(expiresTime, DateTimeFormatter.RFC_1123_DATE_TIME);
             return true;
         } catch (DateTimeParseException e) {
             return false;
@@ -36,14 +36,13 @@ public class CookieTest {
     /**
      * Verify a basic cookie key using regex
      * @param value        {@code String}  A string defining a cookie key's value
-     * @param pattern      {@code String}  A string defining a regex patter the key should follow
+     * @param pattern      {@code String}  A string defining a regex pattern the cookie key should follow
      * @return             {@code boolean} True for a legal (regex wise) cookie key value; false for an illegal one
      */
     private static boolean verifyKeyValue(String value, String pattern) {
         // init the regex pattern and matcher variables
         Pattern r;
         Matcher m;
-
         r = Pattern.compile(pattern);
         m = r.matcher(value);
         return m.find();
@@ -61,13 +60,13 @@ public class CookieTest {
         Matcher m;
         boolean legalKeys = false;
 
-        // search for standard cookie keys "key=value"
-        r = Pattern.compile("^([^;]+)=([^;]*|\\Z)");
+        // search for standard cookie keys "key=value" or key flags "key"
+        r = Pattern.compile("^([^;=]+)(=([^;]*|\\Z))?");
         m = r.matcher(cookie);
 
         if (m.find()){
             String key = m.group(1);
-            String value = m.group(2);
+            String value = m.group(3);
 
             // delete the found key=value pair from the cookie string
             cookie = m.replaceAll("");
@@ -89,31 +88,16 @@ public class CookieTest {
                     legalKeys = verifyKeyValue(value, "[^;\\x00-\\x1E\\x7F\\]]+");
                     break;
 
+                case "Secure":
+                    legalKeys = true;
+                    break;
+
+                case "HttpOnly":
+                    legalKeys = true;
+                    break;
+
                 default:
                     legalKeys = false;
-            }
-        } else {
-            // search for simple cookie keys (non-equatable)
-            r = Pattern.compile("^([^;]+)");
-            m = r.matcher(cookie);
-
-            if (m.find()) {
-                String key = m.group(1);
-
-                // delete the found key from the cookie string
-                cookie = m.replaceAll("");
-                switch (key) {
-                    case "Secure":
-                        legalKeys = true;
-                        break;
-
-                    case "HttpOnly":
-                        legalKeys = true;
-                        break;
-
-                    default:
-                        legalKeys = false;
-                }
             }
         }
 
@@ -207,6 +191,9 @@ public class CookieTest {
                 // Custom illegal cookies
                 "Set-Cookie: ns1=alss/0.foobar^; Path=; HttpOnly",          // 19 bad path
                 "Set-Cookie: ns1=alss/0.foobar^; floop=doop",               // 20 bad key
+                "Set-Cookie:   sdasd=asdsa",                                // 21 bad whitespace 1
+                "Set-Cookie: ns1=;  Domain=",                               // 22 bad whitespace 2
+                "Set-Cookie: ns1=; Domain= ",                               // 23 bad whitespace 3
         };
 
         for (int i = 0; i < cookies.length; i++)
