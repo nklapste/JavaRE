@@ -73,7 +73,7 @@ public class CookieTest {
 
             switch (key){
                 case "Domain":
-                    legalKeys = verifyKeyValue(value, "^(((?=.{4,253})\\.?((?![-0])[a-zA-Z0-9\\-]{1,62}(?<![-0])\\.)+([a-zA-Z0-9\\-]{2,63}))|\\Z)");
+                    legalKeys = verifyKeyValue(value, "^(((?=.{4,253})\\.?((?![-0])[a-zA-Z0-9\\-]{1,62}(?<![-0])\\.)+((?![-0])[a-zA-Z0-9\\-]{2,63}(?<![-0])))|\\Z)");
                     break;
 
                 case "Max-Age":
@@ -192,7 +192,8 @@ public class CookieTest {
                 "Set-Cookie: ns1=alss/0.foobar^; Path=; HttpOnly",          // 19 bad path
                 "Set-Cookie: ns1=alss/0.foobar^; floop=doop",               // 20 bad key
                 "Set-Cookie:   sdasd=asdsa",                                // 21 bad whitespace 1
-                "Set-Cookie: ns1=;  Domain=",                               // 22 bad whitespace 2
+                "Set-Cookie: ns1=;  Domain=.12312.213-",                               // 22 bad whitespace 2
+                "Set-Cookie: ns1=;  Domain=.12312.-213",                               // 22 bad whitespace 2
         };
 
         for (int i = 0; i < cookies.length; i++)
